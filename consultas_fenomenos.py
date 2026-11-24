@@ -134,3 +134,42 @@ def imprimir_agregacion(resultados, limite=15):
         localidad = r.get("ubicacion", {}).get("localidad", "Sin localidad")
         print(codigo_reporte(r), "|", r["categoria"]["nombre"], "|",
               r["observador"]["alias_o_estacion"], "|", localidad)
+
+# =======================================
+# PROGRAMA PRINCIPAL
+# =======================================
+if __name__ == "__main__":
+    cliente = MongoClient(MONGO_URI)
+    try:
+        cliente.admin.command("ping")
+        db = obtener_db(cliente)
+
+        print("\n===== 1. FILTRO, PROYECCIÓN Y ORDENAMIENTO =====")
+        # Se puede cambiar por canton="..." o id_categoria=1
+        resultados_consulta = consulta_filtro_proyeccion_orden(db, provincia="Puntarenas")
+        imprimir_consulta_1(resultados_consulta)
+
+        print("\n===== 2. RANGO DE FECHAS ($gte y $lte) =====")
+        print("Desde", formatear_fecha(fecha_inicio), "hasta", formatear_fecha(fecha_fin))
+        resultados_fechas = consulta_rango_fechas(db, fecha_inicio, fecha_fin)
+        if not resultados_fechas:
+            print("No hay reportes en ese rango. Ajuste fecha_inicio y fecha_fin.")
+        else:
+            imprimir_consulta_2(resultados_fechas)
+
+        print("\n===== 3. AGREGACIÓN CON $lookup =====")
+        resultados_lookup = agregacion_lookup(db)
+        imprimir_agregacion(resultados_lookup)
+
+        print("\n===== 4. FILTRO EN PYTHON (duración > 200 s) =====")
+        reportes_largos = filtrar_mayores(resultados_lookup, 200)               # list comprehension
+        reportes_largos_lambda = filtrar_mayores_lambda(resultados_lookup, 200)  # filter + lambda
+        print("Reportes de más de 200 s:", len(reportes_largos),
+              "(con filter+lambda:", len(reportes_largos_lambda), ")")
+        imprimir_agregacion(reportes_largos, limite=10)
+
+    except Exception as error:
+        print("Se produjo un error:", error)
+    finally:
+        cliente.close()
+        print("\nConexión cerrada.")

@@ -78,4 +78,35 @@ def borrar_observador():
     else:
         print("No se encontro el observador")
 
+# Menu principal de observadores
+def menu_observadores():
+
+    while True:
+
+        print("\n===== CRUD OBSERVADORES =====")
+        print("1. Insertar observador")
+        print("2. Modificar observador")
+        print("3. Borrar observador")
+        print("4. Salir")
+
+        opcion = input("Seleccione una opcion: ")
+
+        if opcion == "1":
+            insertar_observador()
+
+        elif opcion == "2":
+            modificar_observador()
+
+        elif opcion == "3":
+            borrar_observador()
+
+        elif opcion == "4":
+            print("Saliendo del programa")
+            break
+
+        else:
+            print("Opcion incorrecta")
+
+
+menu_observadores()
 

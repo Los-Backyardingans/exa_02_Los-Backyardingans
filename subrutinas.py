@@ -3,6 +3,9 @@
 subrutinas.py
 Funciones de apoyo reutilizables por todos los programas del examen
 """
+
+import random
+from datetime import datetime, timedelta
 from pymongo import MongoClient
 
 # ---------------------------------------------------------------------------
@@ -81,3 +84,45 @@ def generar_avistamientos(bd, cantidad=10_000):
     # Rango de fechas aleatorias: del 1/ene/2024 al 1/feb/2026
     inicio = datetime(2024, 1, 1)
     rango_seg = int((datetime(2026, 2, 1) - inicio).total_seconds())
+
+    documentos = []
+    for n in range(1, cantidad + 1):
+        ubi = random.choice(ubicaciones)      # localidad real al azar
+        codigo = generar_codigo_reporte(n)    # REP-00000001, REP-00000002...
+
+        # Campos que SIEMPRE existen
+        doc = {
+            "_id": codigo,
+            "codigo_reporte": codigo,
+            "fecha_evento": inicio + timedelta(seconds=random.randint(0, rango_seg)),
+            "id_categoria": random.choice(ids_categoria),
+            "ubicacion": {
+                "id_sector": str(ubi["_id"]),
+                "provincia": ubi["provincia"],   # ajuste a los nombres de su CSV
+                "canton": ubi["canton"],
+                "localidad": ubi["poblado"],
+            },
+        }
+
+        # Campos OPCIONALES (por eso los documentos no son uniformes)
+        if random.random() < 0.90:
+            doc["duracion_seg"] = random.randint(5, 600)
+        if random.random() < 0.85:
+            doc["id_observador"] = random.choice(ids_observador)
+        if random.random() < 0.70:
+            doc["ubicacion"]["distrito"] = ubi["distrito"]
+        if random.random() < 0.60:
+            tele = {}
+            if random.random() < 0.8:
+                tele["visibilidad_km"] = round(random.uniform(0.5, 30.0), 1)
+            if random.random() < 0.8:
+                tele["nubosidad_pct"] = random.randint(0, 100)
+            if random.random() < 0.8:
+                tele["viento_nudos"] = round(random.uniform(0.0, 40.0), 1)
+            if tele:
+                doc["telemetria_entorno"] = tele
+
+        documentos.append(doc)
+
+    bd.avistamientos.insert_many(documentos)
+    print(f"Avistamientos generados: {len(documentos)}")

@@ -50,3 +50,46 @@ def codigo_reporte(reporte: dict) -> str:
 #Devuelve la localidad del reporte, aunque falte la ubicación
 def localidad_de(reporte: dict) -> str:
     return (reporte.get("ubicacion") or {}).get("localidad") or "Sin localidad"
+
+
+# =======================================
+# CONSULTA 1: filtro ($eq), proyección y ordenamiento múltiple
+# =======================================
+#Busca avistamientos por provincia, cantón y/o categoría usando $eq.
+def consulta_filtro_proyeccion_orden(db, provincia=None, canton=None, id_categoria=None):
+    avistamientos = db["avistamientos"]
+
+    filtro = {}
+    if provincia is not None:
+        filtro["ubicacion.provincia"] = {"$eq": provincia}
+    if canton is not None:
+        filtro["ubicacion.canton"] = {"$eq": canton}
+    if id_categoria is not None:
+        filtro["id_categoria"] = {"$eq": id_categoria}
+
+    proyeccion = {
+        "codigo_reporte": 1,
+        "fecha_evento": 1,
+        "duracion_seg": 1,
+        "ubicacion.localidad": 1,
+        # El _id se devuelve por defecto; sirve de respaldo si no hay codigo_reporte
+    }
+
+    cursor = avistamientos.find(filtro, proyeccion).sort([
+        ("duracion_seg", -1),   # duración descendente
+        ("fecha_evento", 1),    # fecha ascendente
+    ])
+    return list(cursor)
+
+#imprime la consulta 1
+def imprimir_consulta_1(resultados, limite=15):
+    print(f"Total encontrados: {len(resultados)} (se muestran {min(limite, len(resultados))})")
+    print(f"{'Código':<14}{'Fecha':<34}{'Duración (s)':<14}Localidad")
+    print("-" * 90)
+    for r in resultados[:limite]:
+        duracion = r.get("duracion_seg")
+        if duracion is None:
+            duracion = "N/D"
+        print(f"{codigo_reporte(r):<14}{formatear_fecha(r.get('fecha_evento')):<34}"
+              f"{str(duracion):<14}{localidad_de(r)}")
+

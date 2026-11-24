@@ -36,3 +36,29 @@ def insertar_observador():
 
     print("Observador insertado correctamente")
     print("ID:", resultado.inserted_id)
+
+    # Metodo para modificar un observador
+    def modificar_observador():
+
+        id_observador = int(input("Ingrese el ID del observador que desea modificar: "))
+
+        alias = input("Ingrese el nuevo alias o estacion: ")
+        rol = input("Ingrese el nuevo rol: ")
+        confiabilidad = float(input("Ingrese el nuevo indice de confiabilidad (0 a 1): "))
+
+        resultado = observadores.update_one(
+            {"_id": id_observador},
+            {
+                "$set": {
+                    "alias_o_estacion": alias,
+                    "rol": rol,
+                    "indice_confiabilidad": confiabilidad
+                }
+            }
+        )
+
+        if resultado.modified_count > 0:
+            print("Observador modificado correctamente")
+        else:
+            print("No se encontro el observador o no hubo cambios")
+

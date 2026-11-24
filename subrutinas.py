@@ -1,3 +1,4 @@
+
 """
 subrutinas.py
 Funciones de apoyo reutilizables por todos los programas del examen

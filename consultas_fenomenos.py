@@ -47,9 +47,6 @@ def obtener_db(cliente):
 def codigo_reporte(reporte: dict) -> str:
     return str(reporte.get("codigo_reporte", reporte.get("_id", "Sin código")))
 
-#Devuelve la localidad del reporte, aunque falte la ubicación
-def localidad_de(reporte: dict) -> str:
-    return (reporte.get("ubicacion") or {}).get("localidad") or "Sin localidad"
 
 
 # =======================================
@@ -83,13 +80,57 @@ def consulta_filtro_proyeccion_orden(db, provincia=None, canton=None, id_categor
 
 #imprime la consulta 1
 def imprimir_consulta_1(resultados, limite=15):
-    print(f"Total encontrados: {len(resultados)} (se muestran {min(limite, len(resultados))})")
-    print(f"{'Código':<14}{'Fecha':<34}{'Duración (s)':<14}Localidad")
-    print("-" * 90)
+    print("Total encontrados:", len(resultados))
     for r in resultados[:limite]:
-        duracion = r.get("duracion_seg")
-        if duracion is None:
-            duracion = "N/D"
-        print(f"{codigo_reporte(r):<14}{formatear_fecha(r.get('fecha_evento')):<34}"
-              f"{str(duracion):<14}{localidad_de(r)}")
+        localidad = r.get("ubicacion", {}).get("localidad", "Sin localidad")
+        print(codigo_reporte(r), "|", formatear_fecha(r.get("fecha_evento")), "|",
+              r.get("duracion_seg", "N/D"), "seg |", localidad)
 
+
+# =======================================
+# CONSULTA 2: rango de fechas ($gte y $lte)
+# =======================================
+def consulta_rango_fechas(db, inicio, fin):
+    avistamientos = db["avistamientos"]
+    filtro = {"fecha_evento": {"$gte": inicio, "$lte": fin}}
+    return list(avistamientos.find(filtro))
+
+#imprime la consulta 2
+def imprimir_consulta_2(resultados, limite=15):
+    print("Total en el rango:", len(resultados))
+    for r in resultados[:limite]:
+        print(codigo_reporte(r), "|", formatear_fecha(r.get("fecha_evento")))
+
+
+# =======================================
+# CONSULTA 3: agregación con dos $lookup
+# =======================================
+def agregacion_lookup(db):
+    avistamientos = db["avistamientos"]
+
+    pipeline = [
+        {"$lookup": {
+            "from": "categorias_fenomeno",
+            "localField": "id_categoria",
+            "foreignField": "_id",
+            "as": "categoria",
+        }},
+        {"$lookup": {
+            "from": "observadores",
+            "localField": "id_observador",
+            "foreignField": "_id",
+            "as": "observador",
+        }},
+        # $lookup devuelve una lista; $unwind la convierte en un solo documento
+        {"$unwind": "$categoria"},
+        {"$unwind": "$observador"},
+    ]
+    return list(avistamientos.aggregate(pipeline))
+
+#metodo que imprime la agregación
+def imprimir_agregacion(resultados, limite=15):
+    print("Total de reportes:", len(resultados))
+    for r in resultados[:limite]:
+        localidad = r.get("ubicacion", {}).get("localidad", "Sin localidad")
+        print(codigo_reporte(r), "|", r["categoria"]["nombre"], "|",
+              r["observador"]["alias_o_estacion"], "|", localidad)

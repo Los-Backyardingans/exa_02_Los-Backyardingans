@@ -6,7 +6,6 @@ Funciones de apoyo reutilizables por todos los programas del examen
 
 import random
 from datetime import datetime, timedelta
-from pymongo import MongoClient
 
 # ---------------------------------------------------------------------------
 # PASO: Listas dadas en el enunciado para clasificar el tipo de zona

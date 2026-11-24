@@ -65,10 +65,11 @@ def consulta_filtro_proyeccion_orden(db, provincia=None, canton=None, id_categor
         filtro["id_categoria"] = {"$eq": id_categoria}
 
     proyeccion = {
+        "_id": 0,
         "codigo_reporte": 1,
         "fecha_evento": 1,
         "duracion_seg": 1,
-        "ubicacion.localidad": 1,
+        "ubicacion.localidad": 1
         # El _id se devuelve por defecto; sirve de respaldo si no hay codigo_reporte
     }
 
@@ -123,17 +124,34 @@ def agregacion_lookup(db):
         }},
         # $lookup devuelve una lista; $unwind la convierte en un solo documento
         {"$unwind": "$categoria"},
-        {"$unwind": "$observador"},
+        {
+            "$unwind": {
+                "path": "$observador",
+                "preserveNullAndEmptyArrays": True
+            }
+        },
     ]
     return list(avistamientos.aggregate(pipeline))
 
 #metodo que imprime la agregación
 def imprimir_agregacion(resultados, limite=15):
+
     print("Total de reportes:", len(resultados))
+
     for r in resultados[:limite]:
-        localidad = r.get("ubicacion", {}).get("localidad", "Sin localidad")
-        print(codigo_reporte(r), "|", r["categoria"]["nombre"], "|",
-              r["observador"]["alias_o_estacion"], "|", localidad)
+
+        localidad = r.get("ubicacion", {}).get(
+            "localidad", "Sin localidad"
+        )
+
+        observador = r.get("observador") or {}
+
+        print(
+            codigo_reporte(r), "|",
+            r["categoria"]["nombre"], "|",
+            observador.get("alias_o_estacion", "Sin observador"),
+            "|", localidad
+        )
 
 # =======================================
 # PROGRAMA PRINCIPAL

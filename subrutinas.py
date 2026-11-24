@@ -62,3 +62,22 @@ def formatear_fecha(fecha) -> str:
 def generar_codigo_reporte(numero: int) -> str:
     #Genera el código 'REP-' + 8 dígitos con ceros a la izquierda."""
     return f"REP-{numero:08d}"
+
+# ---------------------------------------------------------------------------
+# PASO: Generador de avistamientos sintéticos
+# ---------------------------------------------------------------------------
+def generar_avistamientos(bd, cantidad=10_000):
+    """
+    Genera 'cantidad' avistamientos sintéticos NO uniformes en la colección
+    avistamientos. Usa las ubicaciones, categorías y observadores ya cargados.
+    """
+    bd.avistamientos.drop()  # evita duplicados al ejecutar varias veces
+
+    # Datos de referencia que ya están en la base de datos
+    ubicaciones = list(bd.ubicaciones.find())
+    ids_categoria = [c["_id"] for c in bd.categorias_fenomeno.find({}, {"_id": 1})]
+    ids_observador = [o["_id"] for o in bd.observadores.find({}, {"_id": 1})]
+
+    # Rango de fechas aleatorias: del 1/ene/2024 al 1/feb/2026
+    inicio = datetime(2024, 1, 1)
+    rango_seg = int((datetime(2026, 2, 1) - inicio).total_seconds())

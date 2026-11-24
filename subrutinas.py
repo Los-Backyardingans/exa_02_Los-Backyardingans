@@ -27,3 +27,22 @@ POBLADOS_INSULARES = {
     "Isla Berrugate",
 }
 
+def clasificar_tipo_zona(provincia: str, canton: str, poblado: str) -> str:
+    """
+    Determina el tipo_zona de una localidad.
+    Orden de prioridad (lo más específico primero):
+      1. Poblado insular  -> "Insular"
+      2. Cantón costero   -> "Costera"
+      3. Cantón montañoso -> "Montañosa"
+      4. Cualquier otro   -> "Urbana"
+    """
+
+    #Recibe los datos de una localidad y devuelve uno de los cuatro valores posibles de tipo_zona:
+    if poblado.strip() in POBLADOS_INSULARES:
+        return "Insular"
+    if canton.strip() in CANTONES_COSTEROS:
+        return "Costera"
+    if canton.strip() in CANTONES_MONTANOSOS:
+        return "Montañosa"
+    return "Urbana"
+

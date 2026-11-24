@@ -97,10 +97,10 @@ def generar_avistamientos(bd, cantidad=10_000):
             "fecha_evento": inicio + timedelta(seconds=random.randint(0, rango_seg)),
             "id_categoria": random.choice(ids_categoria),
             "ubicacion": {
-                "id_sector": str(ubi["_id"]),
+                "id_sector": ubi["id_sector"],
                 "provincia": ubi["provincia"],   # ajuste a los nombres de su CSV
                 "canton": ubi["canton"],
-                "localidad": ubi["poblado"],
+                "localidad": ubi["localidad"],
             },
         }
 
